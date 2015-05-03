@@ -50,35 +50,43 @@ int Server::init_socket()
 	freeaddrinfo(serv_info);
 	return sockfd;
 }
-
 void Server::init_headers()
 {
 	headers[200] = "HTTP/1.1 200 OK\n\n";
 	headers[404] = "HTTP/1.1 404 File not Found\n\n";
 }
-
 std::string Server::accept_request(int sockfd)
 {
-	int bufsize = BUFSIZE;
-
 	int received = 0;
 	std::string request;
 	do
 	{
-		request.reserve(request.size() + bufsize);
-		received = recv(sockfd, &request[request.size()], bufsize, 0);
-		if (received < 0) std::cerr << "ERROR read request" << std::endl;
-	} while (received == bufsize);
-	request.shrink_to_fit();
+		request.resize(request.size()+BUFSIZE);
+		received = recv(sockfd, &request[request.size() - BUFSIZE], BUFSIZE, 0);
+		if (received < 0)
+		{
+			std::cerr << "ERROR accept request" << std::endl;
+			return "";
+		}
+	} while (received == BUFSIZE);
+	request.resize(request.size() - BUFSIZE + received);
 	std::cout << request << std::endl;
 	return request;
 }
 
 void Server::send_static_file(std::string filename, int sockfd)
 {
-	std::string* headbuffer = &headers[200];
 	std::string* filebuffer = fc.get(filename);
-
+	std::string* headbuffer;
+	if (!filebuffer)
+	{
+		headbuffer = &headers[404];
+		filebuffer = fc.get("404.html");
+	}
+	else
+	{
+		headbuffer = &headers[200];
+	}
 	send(sockfd, headbuffer->data(), headbuffer->length(), 0);
 	send(sockfd, filebuffer->data(), filebuffer->length(), 0);
 }
@@ -87,6 +95,7 @@ Server::Server()
 {
 	init_headers();
 	sockfd = init_socket();
+	fc = FileCache("/home/gekkey/cpp/server/www/");
 }
 
 void Server::start()
@@ -101,7 +110,7 @@ void Server::start()
 		clientfd = accept(sockfd, (sockaddr *)&client_addr, &addr_size);
 		start_time = std::clock();
 		std::string request = accept_request(clientfd);
-		send_static_file("/home/gekkey/cpp/server/www/index.html", clientfd);
+		send_static_file("index.html", clientfd);
 		std::cout << "request took "
 				<< (std::clock() - start_time) / (double)(CLOCKS_PER_SEC / 1000)
 				<< " ms" << std::endl << std::endl;

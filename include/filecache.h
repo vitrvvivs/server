@@ -20,9 +20,14 @@ struct File
 class FileCache
 {
 	public:
+		FileCache(){
+			root = "/srv/";}
+		FileCache(std::string a):
+			root{a} {};
 		std::string* get(std::string);
 	private:
-		std::string* loadfile(std::string);
+		std::string root;
+		std::string* loadfile(std::string*);
 		std::unordered_map<std::string, int> freq;
 		std::unordered_map<std::string, File> files;
 		std::string naf_error = "not a file";

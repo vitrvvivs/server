@@ -152,7 +152,7 @@ void Server::start(int threadno)
 		Request request = accept_request(clientfd);
 		std::cout << "Thread " << threadno << ": " << *request.get("method") << " " << *request.get("action") << std::endl;
 		send_static_file(*request.get("action"), clientfd);
-		std::cout << "request took "
+		std::cout << "response took "
 				<< (std::clock() - start_time) / (double)(CLOCKS_PER_SEC / 1000)
 				<< " ms" << std::endl << std::endl;
 		close(clientfd);

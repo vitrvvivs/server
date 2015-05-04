@@ -15,7 +15,6 @@ struct File
 		contents = 0;}
 	File(std::string a, int b, std::string* c):
 		name{a}, size{b}, contents{c} {};
-	~File() {delete[] contents};
 };
 
 class FileCache

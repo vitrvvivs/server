@@ -87,6 +87,7 @@ void Server::send_static_file(std::string filename, int sockfd)
 	{
 		headbuffer = &headers[200];
 	}
+	std::cout << "fc returned" << *filebuffer << std::endl;
 	send(sockfd, headbuffer->data(), headbuffer->length(), 0);
 	send(sockfd, filebuffer->data(), filebuffer->length(), 0);
 }

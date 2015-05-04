@@ -1,4 +1,4 @@
-CC=g++ -std=c++11 -Wall -Llib -Iinclude -lstdc++
+CC=g++ -std=c++11 -Wall -Llib -Iinclude -lstdc++ -lpthread
 EXFLAGS=-Wl,-rpath=./lib
 SOFLAGS=-shared -fPIC
 

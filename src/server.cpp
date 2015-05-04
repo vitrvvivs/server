@@ -1,4 +1,6 @@
 #include "server.h"
+#include "request.h"
+
 #include <string>
 #include <ctime>
 #include <cstring>
@@ -17,6 +19,46 @@ void prevent(bool status, const char *message)
 		std::cerr << status << message << std::endl;
 		exit(1);
 	}
+}
+
+Request::Request(std::string* req_string)
+{
+	std::string key;
+	std::string val;
+
+	unsigned int start = 0;
+	unsigned int end = req_string->find(" ");
+	method = req_string->substr(start, end - start);
+
+	start = end + 1;
+	end = req_string->find(" ", start);
+	action = req_string->substr(start, end - start);
+
+	valid = (end != std::string::npos);
+	return;
+
+	end = req_string->find("\n", end);
+	while (end < req_string->size())
+	{
+		start = end + 1;
+		end = req_string->find(":", start);
+		key = req_string->substr(start, end - start);
+
+		start = end + 2;
+		end = req_string->find("\n", start);
+		val = req_string->substr(start, end - start);
+
+		properties[key] = val;
+	}
+}
+std::string* Request::get(std::string key)
+{
+	if (key == "method")
+		return &method;
+	else if (key == "action")
+		return &action;
+	else
+		return &(properties[key]);
 }
 
 int Server::init_socket()
@@ -55,7 +97,7 @@ void Server::init_headers()
 	headers[200] = "HTTP/1.1 200 OK\n\n";
 	headers[404] = "HTTP/1.1 404 File not Found\n\n";
 }
-std::string Server::accept_request(int sockfd)
+Request Server::accept_request(int sockfd)
 {
 	int received = 0;
 	std::string request;
@@ -66,14 +108,12 @@ std::string Server::accept_request(int sockfd)
 		if (received < 0)
 		{
 			std::cerr << "ERROR accept request" << std::endl;
-			return "";
+			return Request(&request);
 		}
 	} while (received == BUFSIZE);
 	request.resize(request.size() - BUFSIZE + received);
-	std::cout << request << std::endl;
-	return request;
+	return Request(&request);
 }
-
 void Server::send_static_file(std::string filename, int sockfd)
 {
 	std::string* filebuffer = fc.get(filename);
@@ -87,31 +127,31 @@ void Server::send_static_file(std::string filename, int sockfd)
 	{
 		headbuffer = &headers[200];
 	}
-	std::cout << "fc returned" << *filebuffer << std::endl;
 	send(sockfd, headbuffer->data(), headbuffer->length(), 0);
 	send(sockfd, filebuffer->data(), filebuffer->length(), 0);
 }
-
 Server::Server()
 {
 	init_headers();
 	sockfd = init_socket();
-	fc = FileCache("/home/gekkey/cpp/server/www/");
+	fc = FileCache("/home/gekkey/cpp/server/www");
 }
 
-void Server::start()
+void Server::start(int threadno)
 {
 	std::clock_t start_time;
 	sockaddr_storage client_addr;
 	socklen_t addr_size = sizeof(client_addr);
 	int clientfd;
 
+	std::cout << "Listener thread started\n";
 	while (true)
 	{
 		clientfd = accept(sockfd, (sockaddr *)&client_addr, &addr_size);
 		start_time = std::clock();
-		std::string request = accept_request(clientfd);
-		send_static_file("index.html", clientfd);
+		Request request = accept_request(clientfd);
+		std::cout << "Thread " << threadno << ": " << *request.get("method") << " " << *request.get("action") << std::endl;
+		send_static_file(*request.get("action"), clientfd);
 		std::cout << "request took "
 				<< (std::clock() - start_time) / (double)(CLOCKS_PER_SEC / 1000)
 				<< " ms" << std::endl << std::endl;

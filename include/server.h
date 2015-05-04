@@ -1,4 +1,5 @@
 #include "filecache.h"
+#include "request.h"
 #include <string>
 #include <unordered_map>
 
@@ -8,7 +9,7 @@ class Server
 {
 	public:
 		Server();
-		void start();
+		void start(int);
 	private:
 		int sockfd;
 		FileCache fc;
@@ -16,7 +17,7 @@ class Server
 
 		int init_socket();
 		void init_headers();
-		std::string accept_request(int);
+		Request accept_request(int);
 		void send_static_file(std::string, int);
 };
 #endif

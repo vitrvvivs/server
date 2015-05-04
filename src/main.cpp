@@ -4,7 +4,7 @@
 #include <iostream>
 #include <unistd.h>
 
-#define NUM_THREADS 2
+#define NUM_THREADS 6
 
 int main(int argc, char *argv[])
 {
@@ -12,8 +12,8 @@ int main(int argc, char *argv[])
 	Server server;
 	for (int i = 0; i < NUM_THREADS; ++i)
 	{
-		pool.push_back(std::thread([&server](){
-			server.start();
+		pool.push_back(std::thread([&server, i](){
+			server.start(i);
 		}));
 	}
 	for (int i = 0; i < NUM_THREADS; ++i)

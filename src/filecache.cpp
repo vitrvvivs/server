@@ -29,10 +29,11 @@ std::string* FileCache::loadfile(std::string* filename)
 {
 	std::string *contents = new std::string;
 	int size;
-	std::string tmp = root;
-	tmp.append(filename->begin(), filename->end());
-	filename = &tmp;
-	std::ifstream in(filename->c_str(), std::ios_base::in | std::ios::binary);
+
+	std::string abs_filename = root;
+	abs_filename.append(filename->begin(), filename->end());
+
+	std::ifstream in(abs_filename.c_str(), std::ios_base::in | std::ios::binary);
 	if ((in.rdstate() & std::ifstream::failbit))
 	{
 		std::cerr << "ERROR loadfile: " << in.rdstate() << std::endl;

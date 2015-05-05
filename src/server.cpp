@@ -121,7 +121,7 @@ void Server::send_static_file(std::string filename, int sockfd)
 	if (!filebuffer)
 	{
 		headbuffer = &headers[404];
-		filebuffer = fc.get("404.html");
+		filebuffer = fc.get("/404.html");
 	}
 	else
 	{

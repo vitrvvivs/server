@@ -41,6 +41,11 @@ std::string* FileCache::loadfile(std::string* filename)
 	}
 	in.seekg(0, std::ios::end);
 	size = in.tellg();
+	if (size < 0)
+	{
+		std::cerr << "ERROR loadfile: " << in.rdstate() << std::endl;
+		return 0;
+	}
 	contents->resize(size);
 	in.seekg(0, std::ios::beg);
 	in.read(&(*contents)[0], contents->size());

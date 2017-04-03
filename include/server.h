@@ -8,7 +8,7 @@
 class Server
 {
 	public:
-		Server();
+		Server(std::string);
 		void start(int);
 	private:
 		int sockfd;

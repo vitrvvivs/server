@@ -4,13 +4,19 @@ SOFLAGS=-shared -fPIC
 
 all: bin/server
 
-bin/server: src/main.cpp lib/libserver.so
+bin/:
+	mkdir -p bin
+
+bin/server: bin/ src/main.cpp lib/libserver.so
 	$(CC) $(EXFLAGS) src/main.cpp -o bin/server -lserver
 
-lib/libserver.so: src/server.cpp lib/libfilecache.so
+lib/:
+	mkdir -p lib
+
+lib/libserver.so: lib/ src/server.cpp lib/libfilecache.so
 	$(CC) $(SOFLAGS) src/server.cpp -o lib/libserver.so -lfilecache
 
-lib/libfilecache.so: src/filecache.cpp
+lib/libfilecache.so: lib/ src/filecache.cpp
 	$(CC) $(SOFLAGS) src/filecache.cpp -o lib/libfilecache.so
 
 clean:

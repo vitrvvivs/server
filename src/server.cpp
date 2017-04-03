@@ -1,5 +1,6 @@
 #include "server.h"
 #include "request.h"
+#include "header.h"
 
 #include <string>
 #include <ctime>
@@ -26,10 +27,12 @@ Request::Request(std::string* req_string)
 	std::string key;
 	std::string val;
 
+	// method = "GET"
 	unsigned int start = 0;
 	unsigned int end = req_string->find(" ");
 	method = req_string->substr(start, end - start);
 
+	// action = "/index.html"
 	start = end + 1;
 	end = req_string->find(" ", start);
 	action = req_string->substr(start, end - start);
@@ -60,6 +63,34 @@ std::string* Request::get(std::string key)
 	else
 		return &(properties[key]);
 }
+
+Header::Header(int code)
+{
+	response_code = code;
+}
+std::string Header::str()
+{
+	char buf[11];
+	int buf_len = sprintf(buf, "%d", content_length);
+
+	_str.assign("HTTP/1.1 ");
+	_str.append(resp_codes[response_code]);
+
+	_str.append("\nContent-Length: ");
+	_str.append(buf, buf_len);
+
+	_str.append("\n\n");
+	return _str;
+}
+int Header::size()
+{
+	if (_str.empty())
+	{
+		str();
+	}
+	return _str.length();
+}
+
 
 int Server::init_socket()
 {
@@ -92,11 +123,7 @@ int Server::init_socket()
 	freeaddrinfo(serv_info);
 	return sockfd;
 }
-void Server::init_headers()
-{
-	headers[200] = "HTTP/1.1 200 OK\n\n";
-	headers[404] = "HTTP/1.1 404 File not Found\n\n";
-}
+
 Request Server::accept_request(int sockfd)
 {
 	int received = 0;
@@ -117,24 +144,22 @@ Request Server::accept_request(int sockfd)
 void Server::send_static_file(std::string filename, int sockfd)
 {
 	std::string* filebuffer = fc.get(filename);
-	std::string* headbuffer;
+	Header header(200);
 	if (!filebuffer)
 	{
-		headbuffer = &headers[404];
+		header.response_code = 404;
 		filebuffer = fc.get("/404.html");
+		if (!filebuffer) filebuffer = new std::string("404 Not Found");
 	}
-	else
-	{
-		headbuffer = &headers[200];
-	}
-	send(sockfd, headbuffer->data(), headbuffer->length(), 0);
+	header.content_length = filebuffer->size();
+
+	send(sockfd, header.str().data(), header.size(), 0);
 	send(sockfd, filebuffer->data(), filebuffer->length(), 0);
 }
-Server::Server()
+Server::Server(std::string server_root)
 {
-	init_headers();
 	sockfd = init_socket();
-	fc = FileCache("/home/gekkey/cpp/server/www");
+	fc = FileCache(server_root);
 }
 
 void Server::start(int threadno)
@@ -150,11 +175,12 @@ void Server::start(int threadno)
 		clientfd = accept(sockfd, (sockaddr *)&client_addr, &addr_size);
 		start_time = std::clock();
 		Request request = accept_request(clientfd);
-		std::cout << "Thread " << threadno << ": " << *request.get("method") << " " << *request.get("action") << std::endl;
+		std::cout << "Thread " << threadno << ": " << *request.get("method")
+			<< " " << *request.get("action") << std::endl;
 		send_static_file(*request.get("action"), clientfd);
 		std::cout << "response took "
-				<< (std::clock() - start_time) / (double)(CLOCKS_PER_SEC / 1000)
-				<< " ms" << std::endl << std::endl;
+			<< (std::clock() - start_time) / (double)(CLOCKS_PER_SEC / 1000)
+			<< " ms" << std::endl << std::endl;
 		close(clientfd);
 	}
 }

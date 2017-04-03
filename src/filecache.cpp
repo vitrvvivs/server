@@ -27,7 +27,7 @@ std::string* FileCache::get(std::string filename)
 }
 std::string* FileCache::loadfile(std::string* filename)
 {
-	std::string *contents = new std::string;
+	std::string* contents = new std::string;
 	int size;
 
 	std::string abs_filename = root;
@@ -36,14 +36,14 @@ std::string* FileCache::loadfile(std::string* filename)
 	std::ifstream in(abs_filename.c_str(), std::ios_base::in | std::ios::binary);
 	if ((in.rdstate() & std::ifstream::failbit))
 	{
-		std::cerr << "ERROR loadfile: " << in.rdstate() << std::endl;
+		std::cerr << "filecache::loadfile failbit" << std::endl;
 		return 0;
 	}
 	in.seekg(0, std::ios::end);
 	size = in.tellg();
 	if (size < 0)
 	{
-		std::cerr << "ERROR loadfile: " << in.rdstate() << std::endl;
+		std::cerr << "filecache::loadfile tellg < 0: " << std::endl;
 		return 0;
 	}
 	contents->resize(size);
@@ -59,7 +59,8 @@ std::string* FileCache::loadfile(std::string* filename)
 	}
 	else
 	{
-		std::cout << "filecache::loadfile: too large to cache: "<< *filename << std::endl;
+		std::cout << "filecache::loadfile: too large to cache: "
+			<< *filename << std::endl;
 	}
 
 	return contents;
